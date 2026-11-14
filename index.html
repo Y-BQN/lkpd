@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LKPD-Gen BQN✨</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #f0f7ff;
+    }
+    .font-display { font-family: 'Fredoka', cursive, sans-serif; }
+
+    .a4-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      transform-origin: top center;
+      transition: transform 0.2s ease-out;
+    }
+
+    .a4-page {
+      width: 210mm;
+      min-height: 297mm;
+      max-height: 297mm;
+      padding: 10mm 12mm;
+      box-sizing: border-box;
+      background: #ffffff;
+      box-shadow: 0 20px 45px -10px rgba(14, 116, 144, 0.18), 0 0 0 1px rgba(186, 230, 253, 0.8);
+      border-radius: 6px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      color: #1e293b;
+    }
+
+    .a4-page::before {
+      content: "";
+      position: absolute;
+      top: -40px;
+      right: -40px;
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, rgba(254, 240, 138, 0.45) 0%, rgba(255,255,255,0) 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .a4-content-layer {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      gap: 2.5mm;
+    }
+
+    .dashed-box { border: 1.5px dashed #38bdf8; background-color: #f8fafc; }
+    .dashed-yellow { border: 1.5px dashed #f59e0b; background-color: #fefce8; }
+    .writing-lines {
+      background-image: repeating-linear-gradient(transparent, transparent 17px, #cbd5e1 18px);
+      line-height: 18px;
+    }
+
+    /* Placeholder styling untuk input & select */
+    input::placeholder, textarea::placeholder {
+      color: #94a3b8;
+      opacity: 1;
+      font-weight: 400;
+    }
+    select:invalid {
+      color: #94a3b8 !important;
+      font-weight: 400 !important;
+    }
+    select option {
+      color: #1e293b;
+      font-weight: 500;
+    }
+    select:disabled {
+      color: #cbd5e1 !important;
+      background-color: #f1f5f9 !important;
+      cursor: not-allowed;
+    }
+
+    @keyframes bounce-pencil {
+      0%, 100% { transform: translateY(0) rotate(-12deg); }
+      50% { transform: translateY(-10px) rotate(8deg); }
+    }
+    .animate-pencil { display: inline-block; animation: bounce-pencil 0.8s infinite ease-in-out; }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #e0f2fe; }
+    ::-webkit-scrollbar-thumb { background: #7dd3fc; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
+
+    /* ============================================================
+       ATURAN CETAK A4
+       ============================================================ */
+    @page { size: A4 portrait; margin: 0; }
+
+    @media print {
+      html { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+      body {
+        display: block !important; background: #fff !important;
+        margin: 0 !important; padding: 0 !important;
+        width: 210mm !important; min-height: 0 !important; overflow: hidden !important;
+      }
+      body > * { display: none !important; }
+      body > main#previewContainer {
+        display: block !important; position: static !important;
+        padding: 0 !important; margin: 0 !important; background: #fff !important;
+        overflow: visible !important; height: auto !important; width: auto !important;
+        max-width: none !important; min-height: 0 !important;
+      }
+      main#previewContainer > *:not(#a4Wrapper) { display: none !important; }
+      #a4Wrapper, .a4-wrapper {
+        display: block !important; transform: none !important;
+        height: auto !important; width: auto !important;
+        margin: 0 !important; padding: 0 !important; overflow: visible !important;
+        justify-content: flex-start !important; align-items: flex-start !important;
+      }
+      .a4-page, #lkpdCanvas {
+        display: flex !important; flex-direction: column !important;
+        width: 210mm !important; height: 297mm !important;
+        min-height: 297mm !important; max-height: 297mm !important;
+        margin: 0 !important; padding: 10mm 12mm !important;
+        box-sizing: border-box !important; box-shadow: none !important;
+        border-radius: 0 !important; transform: none !important;
+        overflow: hidden !important;
+        -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
+        page-break-after: avoid !important; page-break-inside: avoid !important;
+        page-break-before: avoid !important; break-after: avoid !important; break-inside: avoid !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col lg:flex-row text-slate-800 overflow-x-hidden">
+
+  <!-- LOADING OVERLAY -->
+  <div id="loadingOverlay" class="fixed inset-0 bg-sky-950/60 backdrop-blur-sm z-50 hidden flex-col items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl border-4 border-amber-300 transform transition-all">
+      <div class="text-5xl mb-3 animate-pencil">✏️</div>
+      <h3 class="font-display text-xl font-bold text-sky-700 mb-1">menyusun LKPD...</h3>
+      <p class="text-sm text-slate-500">Meracik soal seru, maskot lucu, & menyesuaikan halaman A4 ✨</p>
+      <div class="mt-4 w-full bg-sky-100 rounded-full h-2.5 overflow-hidden">
+        <div id="loadingBar" class="bg-gradient-to-r from-sky-400 to-amber-400 h-2.5 rounded-full w-1/3 transition-all duration-500"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toastBox" class="fixed bottom-5 right-5 z-50 hidden items-center gap-2 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl text-sm font-medium transition-all">
+    <span id="toastIcon">✅</span>
+    <span id="toastMsg">Berhasil!</span>
+  </div>
+
+  <!-- PANEL KIRI -->
+  <aside class="w-full lg:w-[400px] xl:w-[430px] bg-white border-b lg:border-b-0 lg:border-r border-sky-200 p-5 sm:p-6 flex flex-col justify-between shrink-0 z-10 shadow-sm overflow-y-auto">
+    <div>
+      <!-- Brand Header dengan logo dari URL -->
+      <div class="flex items-center gap-3 mb-4 pb-3.5 border-b border-sky-100">
+        <div class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-md -rotate-3 overflow-hidden border border-sky-100 shrink-0">
+          <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiDXJeJJ9DWykQVF58kDp_k3wEhCESgfgjq9XyRyik147AC3z2mTULQkwi0aVbl_N8fhzgzqo2TC5qkg2TGYwuL0UuGf9V0d06WE2vcwkYBoVR1kx-b9g5RGYq4BTuAbtKG3ZyL13chTY_lYQWGXHrtq8eVraaj38e9kICAXBqb9Jo88c3y6hyphenhyphen0NYxcNQ4/s1600/Dinamis.png" alt="Logo LKPD Studio" class="w-full h-full object-contain">
+        </div>
+        <div>
+          <h1 class="font-display text-xl font-bold text-slate-800 leading-tight">BQN Studio</h1>
+          <p class="text-xs text-sky-600 font-medium">Generator LKPD 1 hal A4</p>
+        </div>
+      </div>
+
+      <form id="lkpdForm" class="space-y-3" novalidate>
+        <!-- 1. Mata Pelajaran -->
+        <select id="mapelSelect" required class="w-full rounded-xl border border-sky-200 bg-sky-50/50 px-3.5 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:bg-white transition">
+          <option value="" disabled selected>Pilih Mata Pelajaran</option>
+          <option value="Matematika">📐 Matematika</option>
+          <option value="IPA">🔬 IPA (Fisika / Kimia / Biologi)</option>
+          <option value="IPS">🌍 IPS (Sejarah / Geografi / Ekonomi)</option>
+          <option value="Bahasa Indonesia">📖 Bahasa Indonesia</option>
+          <option value="Bahasa Inggris">🇬🇧 Bahasa Inggris</option>
+          <option value="PPKn">⚖️ PPKn (Pendidikan Pancasila)</option>
+          <option value="Informatika">💻 Informatika</option>
+          <option value="Seni Budaya">🎨 Seni Budaya</option>
+          <option value="PJOK">⚽ PJOK (Olahraga & Kesehatan)</option>
+          <option value="Lainnya">✨ Lainnya (Ketik Sendiri...)</option>
+        </select>
+        <input type="text" id="customMapelInput" placeholder="Mata pelajaran (Misal: Prakarya / Sosiologi)" class="hidden w-full rounded-xl border border-amber-300 bg-amber-50/40 px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400">
+
+        <!-- 2. Topik -->
+        <input type="text" id="topikInput" required placeholder="Topik" class="w-full rounded-xl border border-sky-200 bg-sky-50/50 px-3.5 py-2 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:bg-white transition">
+
+        <!-- 3. Sub-Topik (sekarang WAJIB) -->
+        <input type="text" id="subTopikInput" required placeholder="Sub-Topik" class="w-full rounded-xl border border-sky-200 bg-sky-50/50 px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:bg-white transition">
+
+        <!-- 4. Jenjang + 5. Kelas -->
+        <div class="grid grid-cols-2 gap-2.5">
+          <select id="jenjangInput" required class="w-full rounded-xl border border-sky-200 bg-sky-50/50 px-3 py-2 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400">
+            <option value="" disabled selected>Jenjang</option>
+            <option value="SMP">SMP</option>
+            <option value="SMA">SMA</option>
+          </select>
+          <select id="kelasInput" required disabled class="w-full rounded-xl border border-sky-200 bg-sky-50/50 px-3 py-2 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400">
+            <option value="" disabled selected>Pilih Jenjang dulu</option>
+          </select>
+        </div>
+
+        <!-- 6. Model Pembelajaran -->
+        <select id="modelInput" required class="w-full rounded-xl border border-sky-200 bg-sky-50/50 px-3.5 py-2 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400">
+          <option value="" disabled selected>Model Pembelajaran</option>
+          <option value="Discovery Learning">Discovery Learning (Penemuan Terbimbing)</option>
+          <option value="Problem Based Learning (PBL)">Problem Based Learning (PBL)</option>
+          <option value="Inquiry Learning">Inquiry Learning (Penyelidikan Ilmiah)</option>
+          <option value="Project Based Learning (PjBL)">Project Based Learning (PjBL)</option>
+          <option value="Contextual Teaching & Learning">Contextual Teaching & Learning (CTL)</option>
+        </select>
+
+        <!-- 7. Nama Guru + 8. Sekolah -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <input type="text" id="guruInput" required placeholder="Nama Guru" class="w-full rounded-xl border border-sky-200 bg-sky-50/50 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400">
+          <input type="text" id="sekolahInput" required placeholder="Nama Sekolah" class="w-full rounded-xl border border-sky-200 bg-sky-50/50 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400">
+        </div>
+
+        <!-- 9. Upload Referensi (OPSIONAL) -->
+        <div class="rounded-2xl border border-dashed border-sky-300 bg-sky-50/50 p-3">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-bold text-sky-900">Referensi <span class="text-[11px] font-normal text-slate-500">(Opsional)</span></span>
+            <button type="button" id="btnClearFile" class="hidden text-[11px] text-rose-600 hover:underline font-semibold cursor-pointer">Hapus</button>
+          </div>
+          <label for="refFileInput" class="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-xl bg-white border border-sky-200 hover:border-sky-400 text-xs font-semibold text-sky-700 cursor-pointer transition shadow-2xs">
+            <span>📎 Upload (.txt, .md, .pdf, .docx)</span>
+          </label>
+          <input type="file" id="refFileInput" accept=".txt,.md,.pdf,.docx" class="hidden">
+          <div id="fileStatusBox" class="hidden mt-2 text-[11px] bg-white rounded-lg px-2.5 py-1.5 border border-slate-200 flex items-center justify-between gap-2">
+            <div class="truncate">
+              <span id="fileNameDisplay" class="font-semibold text-slate-700">materi.pdf</span>
+              <span id="fileSizeDisplay" class="text-slate-400 ml-1">(120 KB)</span>
+            </div>
+            <span id="fileStatusBadge" class="shrink-0 font-bold text-emerald-600">✅ terbaca</span>
+          </div>
+        </div>
+
+        <!-- Tombol Aksi -->
+        <div class="pt-1.5 space-y-2">
+          <button type="submit" id="btnGenerate" class="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-display font-semibold text-base shadow-lg shadow-sky-500/25 active:scale-[0.98] transition flex items-center justify-center gap-2 cursor-pointer">
+            <span>✨ Generate LKPD</span>
+          </button>
+
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" id="btnShuffle" class="py-2.5 px-3 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-semibold text-xs sm:text-sm active:scale-[0.98] transition flex items-center justify-center gap-1.5 cursor-pointer">
+              <span>🔄 Acak Soal</span>
+            </button>
+            <button type="button" id="btnExportImage" class="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm shadow-md shadow-emerald-600/20 active:scale-[0.98] transition flex items-center justify-center gap-1.5 cursor-pointer">
+              <span>🖼️ Ekspor PNG</span>
+            </button>
+          </div>
+          <p class="text-[10px] text-slate-500 leading-snug bg-sky-50/60 border border-sky-100 rounded-lg px-2 py-1.5">
+            💡 <b>Tips:</b> Gunakan <b>Cetak</b> untuk hasil PDF. Tombol <b>Ekspor PNG</b> tidak disarankan
+          </p>
+        </div>
+      </form>
+    </div>
+
+    <div class="mt-4 p-3 rounded-2xl bg-sky-50 border border-sky-200/80 text-xs text-slate-600 space-y-1">
+      <div class="flex items-center justify-between font-bold text-sky-800">
+        <span>📏 Status Ukuran A4</span>
+        <span id="fitBadge" class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px]">Menunggu Generate</span>
+      </div>
+      <p class="leading-relaxed text-[11px] text-slate-500">
+        Struktur aktivitas & maskot otomatis menyesuaikan mapel.
+      </p>
+    </div>
+  </aside>
+
+  <!-- PANEL KANAN -->
+  <main id="previewContainer" class="flex-1 bg-slate-200/70 p-4 sm:p-6 lg:p-8 overflow-y-auto overflow-x-hidden flex flex-col items-center">
+    <div class="w-full max-w-[210mm] flex flex-wrap items-center justify-between gap-2 mb-3 bg-white/90 backdrop-blur px-4 py-2 rounded-2xl border border-sky-200/70 shadow-sm text-xs">
+      <div class="flex items-center gap-2 font-semibold text-slate-700">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+        <span>Pratinjau</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="printLKPD()" class="px-3 py-1.5 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-800 font-semibold transition cursor-pointer">
+          🖨️ Cetak
+        </button>
+        <span id="zoomLevelText" class="text-slate-500 font-mono bg-slate-100 px-2 py-1 rounded-lg">100%</span>
+      </div>
+    </div>
+
+    <div id="a4Wrapper" class="a4-wrapper">
+      <div id="lkpdCanvas" class="a4-page"></div>
+    </div>
+  </main>
+
+  <script>
+ 
+    /* ============================================================
+       2. MASKOT SVG ADAPTIF PER MAPEL
+       ============================================================ */
+    function getMascot(mapel) {
+      const m = (mapel || "").toLowerCase();
+      if (m.includes("matematika")) {
+        return `<svg width="78" height="78" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-sm">
+          <g transform="rotate(6 50 50)">
+            <rect x="20" y="12" width="60" height="76" rx="14" fill="#38bdf8" stroke="#0284c7" stroke-width="3.5"/>
+            <rect x="28" y="20" width="44" height="22" rx="6" fill="#fef08a" stroke="#eab308" stroke-width="2"/>
+            <circle cx="41" cy="29" r="2.8" fill="#1e293b"/><circle cx="59" cy="29" r="2.8" fill="#1e293b"/>
+            <path d="M 45 34 Q 50 39 55 34" stroke="#1e293b" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <circle cx="35" cy="33" r="2.5" fill="#fb7185" opacity="0.7"/><circle cx="65" cy="33" r="2.5" fill="#fb7185" opacity="0.7"/>
+            <rect x="29" y="48" width="11" height="9" rx="3" fill="#ffffff"/>
+            <rect x="44.5" y="48" width="11" height="9" rx="3" fill="#ffffff"/>
+            <rect x="60" y="48" width="11" height="9" rx="3" fill="#fde047"/>
+            <rect x="29" y="61" width="11" height="9" rx="3" fill="#ffffff"/>
+            <rect x="44.5" y="61" width="11" height="9" rx="3" fill="#ffffff"/>
+            <rect x="60" y="61" width="11" height="22" rx="3" fill="#fb923c"/>
+            <rect x="29" y="74" width="26.5" height="9" rx="3" fill="#bae6fd"/>
+            <text x="8" y="26" font-family="Fredoka, sans-serif" font-weight="bold" font-size="14" fill="#0284c7">π</text>
+            <text x="84" y="82" font-family="Fredoka, sans-serif" font-weight="bold" font-size="14" fill="#eab308">x</text>
+          </g>
+        </svg>`;
+      }
+      if (m.includes("ipa") || m.includes("fisika") || m.includes("kimia") || m.includes("biologi")) {
+        return `<svg width="78" height="78" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-sm">
+          <circle cx="44" cy="14" r="4" fill="#38bdf8" opacity="0.8"/><circle cx="58" cy="10" r="3" fill="#facc15"/><circle cx="53" cy="20" r="2.5" fill="#34d399"/>
+          <rect x="40" y="24" width="20" height="16" rx="3" fill="#e0f2fe" stroke="#0284c7" stroke-width="3"/>
+          <rect x="37" y="22" width="26" height="5" rx="2.5" fill="#38bdf8" stroke="#0284c7" stroke-width="2"/>
+          <path d="M 40 40 L 20 78 Q 17 85 25 85 L 75 85 Q 83 85 80 78 L 60 40 Z" fill="#e0f2fe" stroke="#0284c7" stroke-width="3.5" stroke-linejoin="round"/>
+          <path d="M 29 61 L 22 76 Q 20 82 26 82 L 74 82 Q 80 82 78 76 L 71 61 Z" fill="#fde047"/>
+          <circle cx="42" cy="66" r="3" fill="#1e293b"/><circle cx="58" cy="66" r="3" fill="#1e293b"/>
+          <path d="M 45 72 Q 50 77 55 72" stroke="#1e293b" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <circle cx="36" cy="70" r="2.8" fill="#fb7185" opacity="0.75"/><circle cx="64" cy="70" r="2.8" fill="#fb7185" opacity="0.75"/>
+        </svg>`;
+      }
+      if (m.includes("ips") || m.includes("sejarah") || m.includes("geografi") || m.includes("ekonomi")) {
+        return `<svg width="78" height="78" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-sm">
+          <path d="M 32 86 L 68 86 M 50 76 L 50 86" stroke="#eab308" stroke-width="4.5" stroke-linecap="round"/>
+          <path d="M 24 50 A 28 28 0 0 0 76 50" fill="none" stroke="#f59e0b" stroke-width="3.5" stroke-linecap="round"/>
+          <circle cx="50" cy="48" r="26" fill="#38bdf8" stroke="#0284c7" stroke-width="3"/>
+          <path d="M 33 36 Q 42 32 45 40 Q 41 48 32 45 Z" fill="#86efac"/>
+          <path d="M 56 32 Q 68 35 66 46 Q 58 48 55 40 Z" fill="#fde047"/>
+          <path d="M 44 58 Q 56 56 60 66 Q 48 70 42 64 Z" fill="#86efac"/>
+          <circle cx="42" cy="47" r="2.8" fill="#1e293b"/><circle cx="58" cy="47" r="2.8" fill="#1e293b"/>
+          <path d="M 46 53 Q 50 58 54 53" stroke="#1e293b" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+          <circle cx="36" cy="51" r="2.5" fill="#fb7185" opacity="0.8"/><circle cx="64" cy="51" r="2.5" fill="#fb7185" opacity="0.8"/>
+        </svg>`;
+      }
+      if (m.includes("bahasa") || m.includes("indonesia") || m.includes("inggris") || m.includes("english")) {
+        return `<svg width="78" height="78" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-sm">
+          <path d="M 16 28 Q 34 22 50 30 Q 66 22 84 28 L 84 76 Q 66 70 50 78 Q 34 70 16 76 Z" fill="#fef08a" stroke="#eab308" stroke-width="3.5" stroke-linejoin="round"/>
+          <line x1="50" y1="30" x2="50" y2="78" stroke="#ca8a04" stroke-width="2.5"/>
+          <line x1="24" y1="38" x2="42" y2="36" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="58" y1="36" x2="76" y2="38" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="35" cy="52" r="2.8" fill="#1e293b"/><circle cx="65" cy="52" r="2.8" fill="#1e293b"/>
+          <path d="M 44 58 Q 50 64 56 58" stroke="#1e293b" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <circle cx="30" cy="56" r="2.5" fill="#fb7185" opacity="0.75"/><circle cx="70" cy="56" r="2.5" fill="#fb7185" opacity="0.75"/>
+          <rect x="44" y="10" width="12" height="14" rx="2" fill="#38bdf8" stroke="#0284c7" stroke-width="2" transform="rotate(15 50 17)"/>
+        </svg>`;
+      }
+      if (m.includes("ppkn") || m.includes("pancasila") || m.includes("kewarganegaraan")) {
+        return `<svg width="78" height="78" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-sm">
+          <path d="M 50 14 L 82 26 L 82 52 Q 82 76 50 88 Q 18 76 18 52 L 18 26 Z" fill="#fde047" stroke="#eab308" stroke-width="3.5" stroke-linejoin="round"/>
+          <path d="M 50 20 L 76 30 L 76 51 Q 76 71 50 81 Q 24 71 24 51 L 24 30 Z" fill="#38bdf8"/>
+          <polygon points="50,24 52,30 58,30 53,34 55,40 50,36 45,40 47,34 42,30 48,30" fill="#fef08a"/>
+          <circle cx="40" cy="52" r="3" fill="#1e293b"/><circle cx="60" cy="52" r="3" fill="#1e293b"/>
+          <path d="M 44 60 Q 50 66 56 60" stroke="#1e293b" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+          <circle cx="34" cy="56" r="2.8" fill="#fb7185" opacity="0.8"/><circle cx="66" cy="56" r="2.8" fill="#fb7185" opacity="0.8"/>
+        </svg>`;
+      }
+      if (m.includes("informatika") || m.includes("komputer") || m.includes("tik") || m.includes("coding")) {
+        return `<svg width="78" height="78" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-sm">
+          <line x1="50" y1="12" x2="50" y2="24" stroke="#0284c7" stroke-width="3.5" stroke-linecap="round"/>
+          <circle cx="50" cy="10" r="5" fill="#facc15" stroke="#eab308" stroke-width="2"/>
+          <rect x="12" y="42" width="8" height="18" rx="4" fill="#facc15" stroke="#eab308" stroke-width="2"/>
+          <rect x="80" y="42" width="8" height="18" rx="4" fill="#facc15" stroke="#eab308" stroke-width="2"/>
+          <rect x="20" y="24" width="60" height="54" rx="16" fill="#38bdf8" stroke="#0284c7" stroke-width="3.5"/>
+          <rect x="28" y="34" width="44" height="32" rx="9" fill="#0f172a"/>
+          <circle cx="40" cy="47" r="4" fill="#38bdf8"/><circle cx="60" cy="47" r="4" fill="#38bdf8"/>
+          <path d="M 44 56 Q 50 61 56 56" stroke="#fde047" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+          <rect x="38" y="78" width="24" height="8" rx="3" fill="#bae6fd" stroke="#0284c7" stroke-width="2"/>
+        </svg>`;
+      }
+      if (m.includes("seni") || m.includes("budaya") || m.includes("musik") || m.includes("rupa")) {
+        return `<svg width="78" height="78" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-sm">
+          <path d="M 50 16 C 24 16 14 36 16 58 C 18 76 34 84 48 82 C 56 81 56 70 64 70 C 74 70 84 62 84 48 C 84 28 68 16 50 16 Z" fill="#fef08a" stroke="#eab308" stroke-width="3.5"/>
+          <circle cx="68" cy="54" r="6" fill="#ffffff" stroke="#eab308" stroke-width="2"/>
+          <circle cx="34" cy="32" r="5" fill="#ef4444"/><circle cx="50" cy="27" r="5" fill="#38bdf8"/><circle cx="66" cy="34" r="5" fill="#22c55e"/>
+          <circle cx="34" cy="52" r="2.8" fill="#1e293b"/><circle cx="48" cy="52" r="2.8" fill="#1e293b"/>
+          <path d="M 37 59 Q 41 64 45 59" stroke="#1e293b" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+          <line x1="62" y1="78" x2="86" y2="20" stroke="#0284c7" stroke-width="4" stroke-linecap="round"/>
+        </svg>`;
+      }
+      if (m.includes("pjok") || m.includes("olahraga") || m.includes("penjas") || m.includes("kesehatan")) {
+        return `<svg width="78" height="78" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-sm">
+          <rect x="44" y="10" width="12" height="8" rx="2" fill="#eab308" stroke="#a16207" stroke-width="2"/>
+          <line x1="72" y1="22" x2="78" y2="16" stroke="#0284c7" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="50" cy="52" r="32" fill="#38bdf8" stroke="#0284c7" stroke-width="3.5"/>
+          <circle cx="50" cy="52" r="24" fill="#ffffff"/>
+          <circle cx="42" cy="49" r="3" fill="#1e293b"/><circle cx="58" cy="49" r="3" fill="#1e293b"/>
+          <path d="M 44 56 Q 50 63 56 56" stroke="#1e293b" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+          <circle cx="36" cy="53" r="2.8" fill="#fb7185" opacity="0.8"/><circle cx="64" cy="53" r="2.8" fill="#fb7185" opacity="0.8"/>
+          <path d="M 28 38 Q 50 32 72 38" stroke="#facc15" stroke-width="5" fill="none"/>
+        </svg>`;
+      }
+      return `<svg width="78" height="78" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-sm">
+        <rect x="22" y="16" width="56" height="68" rx="12" fill="#38bdf8" stroke="#0284c7" stroke-width="3.5"/>
+        <rect x="22" y="16" width="12" height="68" rx="4" fill="#fde047" stroke="#eab308" stroke-width="2.5"/>
+        <polygon points="56,24 58,29 63,29 59,32 60,37 56,34 52,37 53,32 49,29 54,29" fill="#fef08a"/>
+        <circle cx="48" cy="52" r="3" fill="#1e293b"/><circle cx="64" cy="52" r="3" fill="#1e293b"/>
+        <path d="M 51 59 Q 56 65 61 59" stroke="#1e293b" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <circle cx="43" cy="56" r="2.5" fill="#fb7185" opacity="0.75"/><circle cx="69" cy="56" r="2.5" fill="#fb7185" opacity="0.75"/>
+      </svg>`;
+    }
+
+    /* ============================================================
+       3. ILUSTRASI SVG KONTEKSTUAL
+       ============================================================ */
+    function getContextualIllustration(mapel, topik, subTopik) {
+      const m = (mapel || "").toLowerCase();
+      const full = `${topik} ${subTopik}`.toLowerCase();
+      if (m.includes("matematika")) {
+        if (full.includes("statistika") || full.includes("data") || full.includes("mean")) {
+          return `<svg width="160" height="100" viewBox="0 0 210 130" xmlns="http://www.w3.org/2000/svg">
+            <rect x="8" y="8" width="194" height="114" rx="12" fill="#f0f9ff" stroke="#bae6fd" stroke-width="2"/>
+            <line x1="28" y1="102" x2="185" y2="102" stroke="#0284c7" stroke-width="2.5"/>
+            <rect x="42" y="55" width="24" height="47" rx="4" fill="#7dd3fc"/>
+            <rect x="78" y="34" width="24" height="68" rx="4" fill="#facc15"/>
+            <rect x="114" y="45" width="24" height="57" rx="4" fill="#38bdf8"/>
+            <rect x="150" y="24" width="24" height="78" rx="4" fill="#34d399"/>
+            <text x="105" y="118" text-anchor="middle" font-size="10" font-weight="bold" fill="#0369a1">Diagram Batang Data</text>
+          </svg>`;
+        }
+        return `<svg width="160" height="100" viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+          <rect x="20" y="15" width="14" height="95" rx="3" fill="#bae6fd" stroke="#0284c7" stroke-width="2"/>
+          <line x1="15" y1="110" x2="185" y2="110" stroke="#0284c7" stroke-width="3" stroke-linecap="round"/>
+          <polyline points="34,96 48,96 48,110" fill="none" stroke="#f59e0b" stroke-width="2.5"/>
+          <polygon points="34,30 34,110 145,110" fill="#fef9c3" opacity="0.85"/>
+          <line x1="34" y1="30" x2="145" y2="110" stroke="#f97316" stroke-width="5" stroke-linecap="round"/>
+          <line x1="42" y1="25" x2="153" y2="105" stroke="#f97316" stroke-width="5" stroke-linecap="round"/>
+          <text x="10" y="72" font-weight="bold" font-size="13" fill="#0369a1">a</text>
+          <text x="86" y="125" font-weight="bold" font-size="13" fill="#0369a1">b</text>
+          <text x="102" y="62" font-weight="bold" font-size="13" fill="#c2410c">c (Sisi Miring)</text>
+        </svg>`;
+      }
+      if (m.includes("ipa")) {
+        return `<svg width="160" height="100" viewBox="0 0 210 130" xmlns="http://www.w3.org/2000/svg">
+          <rect x="8" y="8" width="194" height="114" rx="12" fill="#f0f9ff" stroke="#bae6fd" stroke-width="2"/>
+          <rect x="35" y="24" width="38" height="80" rx="4" fill="#ffffff" stroke="#0284c7" stroke-width="2.5"/>
+          <rect x="37" y="64" width="34" height="38" fill="#7dd3fc"/>
+          <line x1="35" y1="44" x2="45" y2="44" stroke="#0284c7" stroke-width="1.5"/>
+          <line x1="35" y1="64" x2="48" y2="64" stroke="#0284c7" stroke-width="1.5"/>
+          <text x="54" y="116" text-anchor="middle" font-size="9" font-weight="bold" fill="#0369a1">V₁ = 50 mL</text>
+          <path d="M 85 65 L 112 65" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+          <polygon points="112,60 122,65 112,70" fill="#f59e0b"/>
+          <rect x="132" y="24" width="38" height="80" rx="4" fill="#ffffff" stroke="#0284c7" stroke-width="2.5"/>
+          <rect x="134" y="44" width="34" height="58" fill="#38bdf8"/>
+          <circle cx="151" cy="88" r="10" fill="#facc15" stroke="#ca8a04" stroke-width="1.5"/>
+          <text x="151" y="116" text-anchor="middle" font-size="9" font-weight="bold" fill="#0369a1">V₂ = 75 mL</text>
+        </svg>`;
+      }
+      if (m.includes("ips")) {
+        return `<svg width="160" height="100" viewBox="0 0 210 130" xmlns="http://www.w3.org/2000/svg">
+          <rect x="8" y="8" width="194" height="114" rx="12" fill="#e0f2fe" stroke="#38bdf8" stroke-width="2"/>
+          <line x1="8" y1="65" x2="202" y2="65" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <line x1="105" y1="8" x2="105" y2="122" stroke="#7dd3fc" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <path d="M 28 50 L 52 72 L 44 80 L 22 58 Z" fill="#4ade80" stroke="#16a34a" stroke-width="1.5"/>
+          <path d="M 55 86 L 98 90 L 96 98 L 54 94 Z" fill="#facc15" stroke="#ca8a04" stroke-width="1.5"/>
+          <path d="M 85 42 Q 112 36 116 62 L 90 66 Z" fill="#4ade80" stroke="#16a34a" stroke-width="1.5"/>
+          <path d="M 132 48 L 146 44 L 142 74 L 128 70 Z" fill="#4ade80" stroke="#16a34a" stroke-width="1.5"/>
+          <path d="M 162 64 Q 186 60 192 84 L 164 84 Z" fill="#facc15" stroke="#ca8a04" stroke-width="1.5"/>
+          <circle cx="176" cy="28" r="13" fill="#ffffff" stroke="#0284c7" stroke-width="2"/>
+          <text x="176" y="32" text-anchor="middle" font-size="10" font-weight="bold" fill="#ef4444">U</text>
+          <text x="58" y="61" font-size="8" font-weight="bold" fill="#dc2626">Garis Khatulistiwa (0°)</text>
+        </svg>`;
+      }
+      if (m.includes("bahasa")) {
+        return `<svg width="160" height="100" viewBox="0 0 210 130" xmlns="http://www.w3.org/2000/svg">
+          <rect x="8" y="8" width="194" height="114" rx="12" fill="#fefce8" stroke="#facc15" stroke-width="2"/>
+          <rect x="22" y="20" width="166" height="24" rx="6" fill="#38bdf8"/>
+          <text x="105" y="36" text-anchor="middle" font-size="10" font-weight="bold" fill="#ffffff">1. Identifikasi / Pembuka</text>
+          <rect x="22" y="52" width="166" height="24" rx="6" fill="#fde047"/>
+          <text x="105" y="68" text-anchor="middle" font-size="10" font-weight="bold" fill="#854d0e">2. Deretan Penjelas / Isi</text>
+          <rect x="22" y="84" width="166" height="24" rx="6" fill="#34d399"/>
+          <text x="105" y="100" text-anchor="middle" font-size="10" font-weight="bold" fill="#ffffff">3. Interpretasi / Penutup</text>
+        </svg>`;
+      }
+      if (m.includes("ppkn")) {
+        return `<svg width="160" height="100" viewBox="0 0 210 130" xmlns="http://www.w3.org/2000/svg">
+          <rect x="8" y="8" width="194" height="114" rx="12" fill="#f0f9ff" stroke="#38bdf8" stroke-width="2"/>
+          <circle cx="65" cy="54" r="24" fill="#fde047" opacity="0.85" stroke="#eab308" stroke-width="2"/>
+          <circle cx="145" cy="54" r="24" fill="#bae6fd" opacity="0.85" stroke="#0284c7" stroke-width="2"/>
+          <path d="M 85 54 L 125 54" stroke="#ef4444" stroke-width="4" stroke-linecap="round"/>
+          <text x="65" y="58" text-anchor="middle" font-size="10" font-weight="bold" fill="#854d0e">Hak</text>
+          <text x="145" y="58" text-anchor="middle" font-size="10" font-weight="bold" fill="#0369a1">Kewajiban</text>
+          <text x="105" y="102" text-anchor="middle" font-size="10" font-weight="bold" fill="#0f172a">Harmoni & Gotong Royong</text>
+        </svg>`;
+      }
+      if (m.includes("informatika")) {
+        return `<svg width="160" height="100" viewBox="0 0 210 130" xmlns="http://www.w3.org/2000/svg">
+          <rect x="8" y="8" width="194" height="114" rx="12" fill="#0f172a"/>
+          <rect x="65" y="16" width="80" height="20" rx="10" fill="#38bdf8"/>
+          <text x="105" y="30" text-anchor="middle" font-size="10" font-weight="bold" fill="#0f172a">MULAI (Input)</text>
+          <line x1="105" y1="36" x2="105" y2="50" stroke="#facc15" stroke-width="2"/>
+          <polygon points="105,50 145,68 105,86 65,68" fill="#facc15"/>
+          <text x="105" y="71" text-anchor="middle" font-size="9" font-weight="bold" fill="#0f172a">Proses / Cek?</text>
+          <line x1="105" y1="86" x2="105" y2="98" stroke="#34d399" stroke-width="2"/>
+          <rect x="65" y="98" width="80" height="18" rx="9" fill="#34d399"/>
+          <text x="105" y="110" text-anchor="middle" font-size="10" font-weight="bold" fill="#0f172a">OUTPUT</text>
+        </svg>`;
+      }
+      return `<svg width="160" height="100" viewBox="0 0 210 130" xmlns="http://www.w3.org/2000/svg">
+        <rect x="8" y="8" width="194" height="114" rx="14" fill="#f0f9ff" stroke="#38bdf8" stroke-width="2"/>
+        <circle cx="65" cy="65" r="32" fill="#fef08a" stroke="#eab308" stroke-width="2.5"/>
+        <polygon points="145,30 180,95 110,95" fill="#bae6fd" stroke="#0284c7" stroke-width="2.5"/>
+        <path d="M 92 65 L 118 65" stroke="#f97316" stroke-width="3" stroke-dasharray="4 3"/>
+        <text x="65" y="69" text-anchor="middle" font-size="11" font-weight="bold" fill="#a16207">Amati</text>
+        <text x="145" y="82" text-anchor="middle" font-size="11" font-weight="bold" fill="#0369a1">Kreasi</text>
+      </svg>`;
+    }
+
+    /* ============================================================
+       4. FILE REFERENSI
+       ============================================================ */
+    let extractedReferencePoints = [];
+
+    function loadScriptLazy(src) {
+      return new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+        const s = document.createElement("script");
+        s.src = src;
+        s.onload = resolve;
+        s.onerror = () => reject(new Error("Gagal memuat library CDN"));
+        document.head.appendChild(s);
+      });
+    }
+
+    function summarizeTextToPoints(rawText) {
+      if (!rawText || typeof rawText !== "string") return [];
+      const cleaned = rawText.replace(/\r\n/g, "\n").replace(/[#*_`>-]+/g, " ").replace(/\s+/g, " ").trim();
+      const sentences = cleaned.split(/(?<=[.!?])\s+|\n+/).map(s => s.trim()).filter(s => s.length >= 20 && s.length <= 220);
+      if (sentences.length === 0 && cleaned.length > 0) return [cleaned.slice(0, 140) + (cleaned.length > 140 ? "..." : "")];
+      return sentences.slice(0, 4).map(s => s.length > 135 ? s.slice(0, 132) + "..." : s);
+    }
+
+    async function parseReferenceFile(file) {
+      const ext = file.name.split(".").pop().toLowerCase();
+      if (ext === "txt" || ext === "md") {
+        return new Promise((res, rej) => {
+          const r = new FileReader();
+          r.onload = (e) => res(e.target.result);
+          r.onerror = () => rej(new Error("Gagal baca file"));
+          r.readAsText(file, "UTF-8");
+        });
+      }
+      if (ext === "pdf") {
+        await loadScriptLazy("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        const buf = await file.arrayBuffer();
+        const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+        let txt = "";
+        const maxP = Math.min(pdf.numPages, 5);
+        for (let i = 1; i <= maxP; i++) {
+          const page = await pdf.getPage(i);
+          const c = await page.getTextContent();
+          txt += c.items.map(it => it.str).join(" ") + "\n";
+        }
+        return txt;
+      }
+      if (ext === "docx") {
+        await loadScriptLazy("https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js");
+        const buf = await file.arrayBuffer();
+        const result = await window.mammoth.extractRawText({ arrayBuffer: buf });
+        return result.value;
+      }
+      throw new Error("Format tidak didukung");
+    }
+
+    function formatBytes(b) {
+      if (b < 1024) return b + " B";
+      if (b < 1024 * 1024) return (b / 1024).toFixed(1) + " KB";
+      return (b / (1024 * 1024)).toFixed(1) + " MB";
+    }
+
+    /* ============================================================
+       5. STRUKTUR AKTIVITAS ADAPTIF
+       ============================================================ */
+    let currentVariantIndex = 0;
+
+    function buildAdaptiveContent(mapel, topik, subTopik, variantIdx) {
+      const m = mapel.toLowerCase();
+      const subLabel = subTopik ? ` — ${subTopik}` : "";
+      const v = variantIdx % 2;
+
+      if (m.includes("matematika")) {
+        const qBank = v === 0 ? [
+          { level: "Rutin", q: `Identifikasi unsur-unsur penting dan hitunglah nilai dasar dari contoh soal ${topik} sederhana!` },
+          { level: "Kontekstual", q: `Sebuah permasalahan sehari-hari berkaitan dengan ${topik}${subLabel}. Tuliskan diketahui, ditanya, dan penyelesaiannya!` },
+          { level: "Tantangan", q: `Analisislah kasus HOTS berikut terkait ${topik} dan buktikan kesimpulanmu dengan langkah sistematis!` }
+        ] : [
+          { level: "Rutin", q: `Selesaikan perhitungan dasar mengenai ${topik} dengan menuliskan rumus utamanya terlebih dahulu!` },
+          { level: "Kontekstual", q: `Rani menemukan masalah nyata tentang ${topik} di sekolah. Bantulah Rani menghitung solusi yang paling tepat!` },
+          { level: "Tantangan", q: `Buatlah variasi angka baru pada soal ${topik}, lalu tukar dan selesaikan bersama teman sebangkumu!` }
+        ];
+        return {
+          subtitle: `Menjelajahi Pola, Rumus, & Tantangan ${topik}!`,
+          tujuan: [
+            `Menemukan konsep dan aturan utama pada materi ${topik}${subLabel}.`,
+            `Menyelesaikan masalah kontekstual ${topik} secara logis dan teliti.`
+          ],
+          activityHTML: `
+            <section class="rounded-2xl border-2 border-sky-200 bg-white p-2.5">
+              <div class="flex items-center justify-between mb-1">
+                <span class="px-2.5 py-0.5 rounded-xl bg-sky-500 text-white font-display font-bold text-[9.5pt]">🔍 Ayo Temukan! (Eksplorasi Konsep & Rumus)</span>
+                <span class="text-[8pt] font-semibold text-sky-600">Penemuan Terbimbing</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex-1 space-y-1 text-slate-700 leading-snug">
+                  <p class="bg-amber-50 border-l-4 border-amber-400 px-2.5 py-1 rounded-r-lg text-slate-800">💬 <i>"Yuk amati bagaimana konsep <b>${topik}</b>${subLabel} bekerja dalam situasi nyata di sekitar kita!"</i></p>
+                  <ol class="list-decimal list-inside space-y-0.5">
+                    <li>Perhatikan ilustrasi model visual di samping untuk mengenali variabel atau sisi yang terlibat.</li>
+                    <li>Hubungkan unsur yang diketahui dengan aturan dasar <b>${topik}</b>.</li>
+                    <li>Tuliskan kesimpulan rumus umum tim kamu: ........................................................................</li>
+                  </ol>
+                </div>
+                <div class="shrink-0 bg-sky-50/70 rounded-xl p-1.5 border border-dashed border-sky-300">${getContextualIllustration(mapel, topik, subTopik)}</div>
+              </div>
+            </section>
+            <section class="rounded-2xl dashed-box px-3 py-2">
+              <div class="flex items-center justify-between mb-1">
+                <h3 class="font-display font-bold text-[9.5pt] text-sky-900">📊 Representasi Visual & Tabel Pola ${topik}</h3>
+                <span class="text-[8pt] text-sky-600">Lengkapi sel kosong berikut</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-center text-[8.5pt]">
+                <div class="bg-white rounded-xl border border-sky-200 p-1.5"><div class="font-bold text-sky-800">Unsur Diketahui</div><div class="text-slate-400 mt-1">..................................</div></div>
+                <div class="bg-white rounded-xl border border-amber-200 p-1.5"><div class="font-bold text-amber-800">Model Matematika</div><div class="text-slate-400 mt-1">..................................</div></div>
+                <div class="bg-white rounded-xl border border-emerald-200 p-1.5"><div class="font-bold text-emerald-800">Hasil Akhir</div><div class="text-slate-400 mt-1">..................................</div></div>
+              </div>
+            </section>
+            <section class="flex-1 rounded-2xl border-2 border-amber-300 bg-amber-50/30 p-2.5 flex flex-col justify-between">
+              <div class="flex items-center justify-between mb-1">
+                <span class="px-2.5 py-0.5 rounded-xl bg-amber-400 text-slate-900 font-display font-bold text-[9.5pt]">🏆 Tantangan Seru! (Latihan Bertingkat)</span>
+                <span class="text-[8pt] font-semibold text-amber-800">Kerjakan runtut di ruang bergaris</span>
+              </div>
+              <div class="flex-1 flex flex-col justify-between gap-1.5">
+                ${qBank.map((item, idx) => `
+                  <div class="bg-white rounded-xl border border-slate-200 px-2.5 py-1.5 flex-1 flex flex-col justify-between">
+                    <div class="leading-snug text-slate-800">
+                      <b class="text-sky-700">${idx + 1}.</b>
+                      <span class="inline-block px-1.5 rounded bg-sky-100 text-sky-800 font-bold text-[7.5pt] mr-1">${item.level}</span>
+                      <span>${item.q}</span>
+                    </div>
+                    <div class="mt-1 pt-1 border-t border-dashed border-sky-200 writing-lines min-h-[34px] text-[8pt] text-slate-400">Jawab:</div>
+                  </div>
+                `).join("")}
+              </div>
+            </section>
+          `
+        };
+      }
+
+      if (m.includes("ipa")) {
+        const fenomena = v === 0
+          ? `Pernahkah kamu mengamati fenomena alam terkait <b>${topik}</b>${subLabel}? Mengapa perubahan kondisi pada suatu benda dapat memengaruhi hasil pengamatan kita?`
+          : `Bayangkan kamu menjadi ilmuwan muda! Bagaimana cara membuktikan secara ilmiah prinsip <b>${topik}</b>${subLabel} menggunakan alat sederhana di laboratorium?`;
+        return {
+          subtitle: `Penyelidikan Ilmiah & Eksperimen Seru ${topik}!`,
+          tujuan: [
+            `Merumuskan hipotesis dan melakukan pengamatan ilmiah tentang ${topik}.`,
+            `Menganalisis data hasil percobaan ${topik} untuk menarik kesimpulan tepat.`
+          ],
+          activityHTML: `
+            <section class="rounded-2xl border-2 border-sky-200 bg-white p-2.5">
+              <div class="flex items-center justify-between mb-1">
+                <span class="px-2.5 py-0.5 rounded-xl bg-sky-500 text-white font-display font-bold text-[9.5pt]">🔬 Ayo Bereksperimen! (Fenomena & Hipotesis)</span>
+                <span class="text-[8pt] font-semibold text-sky-600">Metode Ilmiah</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex-1 space-y-1.5 text-slate-700 leading-snug">
+                  <p class="bg-amber-50 border-l-4 border-amber-400 px-2.5 py-1 rounded-r-lg text-slate-800">🌟 <b>Fenomena:</b> ${fenomena}</p>
+                  <div class="rounded-xl dashed-yellow px-2.5 py-1.5">
+                    <div class="font-bold text-amber-900 text-[8.5pt]">💭 Prediksi & Hipotesis Awal Kelompokmu:</div>
+                    <div class="writing-lines min-h-[32px] text-[8pt] text-slate-400 mt-0.5">Jika perlakuan diubah, maka menurut tim kami akan terjadi...</div>
+                  </div>
+                </div>
+                <div class="shrink-0 bg-sky-50/70 rounded-xl p-1.5 border border-dashed border-sky-300">${getContextualIllustration(mapel, topik, subTopik)}</div>
+              </div>
+            </section>
+            <section class="rounded-2xl dashed-box px-3 py-2">
+              <div class="flex items-center justify-between mb-1">
+                <h3 class="font-display font-bold text-[9.5pt] text-sky-900">🧪 Langkah Kerja & Tabel Data Pengamatan</h3>
+                <span class="text-[8pt] text-sky-600">Catat hasil pengukuran dengan teliti!</span>
+              </div>
+              <p class="text-[8.5pt] text-slate-700 mb-1.5"><b>Langkah:</b> (1) Siapkan alat & bahan → (2) Lakukan 3 kali percobaan dengan variabel berbeda → (3) Catat pada tabel:</p>
+              <table class="w-full border-collapse bg-white text-[8.5pt] text-center">
+                <thead><tr class="bg-sky-100 text-sky-900">
+                  <th class="border border-sky-300 py-1 px-2 w-12">No</th>
+                  <th class="border border-sky-300 py-1 px-2">Perlakuan / Variabel Bebas</th>
+                  <th class="border border-sky-300 py-1 px-2">Hasil Pengamatan / Pengukuran</th>
+                  <th class="border border-sky-300 py-1 px-2">Keterangan</th>
+                </tr></thead>
+                <tbody>
+                  <tr><td class="border border-sky-200 py-1.5">1</td><td class="border border-sky-200"></td><td class="border border-sky-200"></td><td class="border border-sky-200"></td></tr>
+                  <tr><td class="border border-sky-200 py-1.5">2</td><td class="border border-sky-200"></td><td class="border border-sky-200"></td><td class="border border-sky-200"></td></tr>
+                  <tr><td class="border border-sky-200 py-1.5">3</td><td class="border border-sky-200"></td><td class="border border-sky-200"></td><td class="border border-sky-200"></td></tr>
+                </tbody>
+              </table>
+            </section>
+            <section class="flex-1 rounded-2xl border-2 border-amber-300 bg-amber-50/30 p-2.5 flex flex-col justify-between">
+              <div class="font-display font-bold text-[9.5pt] text-amber-900 mb-1">📊 Analisis Data & Kesimpulan Ilmiah</div>
+              <div class="flex-1 flex flex-col justify-between gap-1.5">
+                <div class="bg-white rounded-xl border border-slate-200 px-2.5 py-1.5 flex-1">
+                  <div class="font-semibold text-slate-800">1. Bagaimana hubungan antar variabel berdasarkan data tabel pengamatan di atas?</div>
+                  <div class="writing-lines min-h-[34px] mt-1"></div>
+                </div>
+                <div class="bg-white rounded-xl border border-slate-200 px-2.5 py-1.5 flex-1">
+                  <div class="font-semibold text-slate-800">2. Kesimpulan: Apakah hipotesis awal tim kamu terbukti? Jelaskan konsep <b>${topik}</b> yang ditemukan!</div>
+                  <div class="writing-lines min-h-[34px] mt-1"></div>
+                </div>
+              </div>
+            </section>
+          `
+        };
+      }
+
+      if (m.includes("ips")) {
+        const kasus = v === 0
+          ? `<b>Berita Singkat:</b> Perubahan dinamika masyarakat dan lingkungan pada topik <b>${topik}</b>${subLabel} membawa peluang sekaligus tantangan baru bagi kesejahteraan warga di berbagai daerah Indonesia.`
+          : `<b>Studi Kasus:</b> Masyarakat di wilayah perkotaan dan pedesaan mengalami perbedaan dampak terkait <b>${topik}</b>${subLabel}. Yuk telusuri penyebab dan dampaknya bersama timmu!`;
+        return {
+          subtitle: `Menjelajah Fenomena Sosial, Ruang, & Ekonomi: ${topik}!`,
+          tujuan: [
+            `Menganalisis faktor penyebab dan dampak fenomena ${topik} di masyarakat.`,
+            `Merumuskan solusi kreatif serta rekomendasi nyata berbasis data sosial.`
+          ],
+          activityHTML: `
+            <section class="rounded-2xl border-2 border-sky-200 bg-white p-2.5">
+              <div class="flex items-center justify-between mb-1">
+                <span class="px-2.5 py-0.5 rounded-xl bg-sky-500 text-white font-display font-bold text-[9.5pt]">🌍 Ayo Menganalisis! (Studi Kasus Kontekstual)</span>
+                <span class="text-[8pt] font-semibold text-sky-600">Literasi Sosial & Spasial</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex-1 bg-amber-50 border-l-4 border-amber-400 px-3 py-2 rounded-r-xl text-slate-800 leading-snug">📰 ${kasus}</div>
+                <div class="shrink-0 bg-sky-50/70 rounded-xl p-1.5 border border-dashed border-sky-300">${getContextualIllustration(mapel, topik, subTopik)}</div>
+              </div>
+            </section>
+            <section class="rounded-2xl border border-sky-200 bg-sky-50/40 p-2.5 space-y-1.5">
+              <div class="font-display font-bold text-[9.5pt] text-sky-900">🔎 Pertanyaan Analisis Kritis</div>
+              <div class="bg-white rounded-xl border border-slate-200 px-2.5 py-1.5">
+                <div class="font-semibold text-slate-800">1. Identifikasi masalah utama dan faktor penyebab terjadinya fenomena <b>${topik}</b> tersebut!</div>
+                <div class="writing-lines min-h-[34px] mt-1"></div>
+              </div>
+              <div class="bg-white rounded-xl border border-slate-200 px-2.5 py-1.5">
+                <div class="font-semibold text-slate-800">2. Bagaimana keterkaitan antara kondisi wilayah/lingkungan dengan aktivitas masyarakat pada kasus ini?</div>
+                <div class="writing-lines min-h-[34px] mt-1"></div>
+              </div>
+            </section>
+            <section class="flex-1 rounded-2xl border-2 border-amber-300 bg-amber-50/30 p-2.5 flex flex-col justify-between gap-1.5">
+              <div>
+                <div class="font-display font-bold text-[9.5pt] text-amber-900 mb-1">📋 Pemetaan Dampak & Rekomendasi Solusi</div>
+                <table class="w-full border-collapse bg-white text-[8.5pt]">
+                  <thead><tr class="bg-amber-100 text-amber-950">
+                    <th class="border border-amber-300 py-1 px-2 w-1/3">Aspek Kajian</th>
+                    <th class="border border-amber-300 py-1 px-2 w-1/3">Dampak Positif (+)</th>
+                    <th class="border border-amber-300 py-1 px-2 w-1/3">Tantangan / Dampak Negatif (-)</th>
+                  </tr></thead>
+                  <tbody>
+                    <tr><td class="border border-amber-200 py-1.5 px-2 font-semibold">Ekonomi & Sosial</td><td class="border border-amber-200"></td><td class="border border-amber-200"></td></tr>
+                    <tr><td class="border border-amber-200 py-1.5 px-2 font-semibold">Lingkungan / Budaya</td><td class="border border-amber-200"></td><td class="border border-amber-200"></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="bg-white rounded-xl border border-emerald-300 px-2.5 py-1.5 flex-1">
+                <div class="font-bold text-emerald-800 text-[8.5pt]">💡 Rekomendasi Solusi Tim Hebat:</div>
+                <div class="writing-lines min-h-[32px] mt-0.5"></div>
+              </div>
+            </section>
+          `
+        };
+      }
+
+      if (m.includes("bahasa")) {
+        const isEnglish = m.includes("inggris");
+        const bacaan = isEnglish
+          ? `<i>"Read carefully: Exploring <b>${topik}</b>${subLabel} helps us communicate ideas clearly and creatively. Pay attention to the text organization, action verbs, and key vocabulary used in context!"</i>`
+          : `<i>"Bacalah dengan saksama: Memahami <b>${topik}</b>${subLabel} melatih kita menyampaikan gagasan secara runtut, menarik, dan santun. Cermati struktur paragraf serta pilihan katanya!"</i>`;
+        return {
+          subtitle: isEnglish ? `Let's Read, Analyze, & Create: ${topik}!` : `Eksplorasi Literasi, Struktur Teks, & Karya: ${topik}!`,
+          tujuan: isEnglish ? [
+            `Identify the generic structure and language features of ${topik}.`,
+            `Compose a short, meaningful text about ${topik} collaboratively.`
+          ] : [
+            `Menelaah struktur bagian dan kaidah kebahasaan pada materi ${topik}.`,
+            `Menyusun gagasan atau karya tulis singkat bertema ${topik} dengan kreatif.`
+          ],
+          activityHTML: `
+            <section class="rounded-2xl border-2 border-sky-200 bg-white p-2.5">
+              <div class="flex items-center justify-between mb-1">
+                <span class="px-2.5 py-0.5 rounded-xl bg-sky-500 text-white font-display font-bold text-[9.5pt]">${isEnglish ? "📖 Let's Read & Explore! (Short Text)" : "📖 Ayo Membaca & Menulis! (Stimulus Bacaan)"}</span>
+                <span class="text-[8pt] font-semibold text-sky-600">Literasi Teks</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex-1 bg-amber-50 border-l-4 border-amber-400 px-3 py-2 rounded-r-xl text-slate-800 leading-snug">${bacaan}</div>
+                <div class="shrink-0 bg-sky-50/70 rounded-xl p-1.5 border border-dashed border-sky-300">${getContextualIllustration(mapel, topik, subTopik)}</div>
+              </div>
+            </section>
+            <section class="rounded-2xl dashed-box px-3 py-2">
+              <div class="font-display font-bold text-[9.5pt] text-sky-900 mb-1">${isEnglish ? "🔍 Structure & Language Features Analysis" : "🔍 Telaah Struktur & Kaidah Kebahasaan"}</div>
+              <table class="w-full border-collapse bg-white text-[8.5pt]">
+                <thead><tr class="bg-sky-100 text-sky-900">
+                  <th class="border border-sky-300 py-1 px-2 w-1/3">${isEnglish ? "Text Aspect" : "Aspek Telaah"}</th>
+                  <th class="border border-sky-300 py-1 px-2">${isEnglish ? "Findings / Examples from Topic" : "Hasil Temuan / Contoh Kutipan"}</th>
+                </tr></thead>
+                <tbody>
+                  <tr><td class="border border-sky-200 py-1.5 px-2 font-semibold">${isEnglish ? "1. Generic Structure" : "1. Struktur Teks"}</td><td class="border border-sky-200 px-2 text-slate-400">..................................................................................</td></tr>
+                  <tr><td class="border border-sky-200 py-1.5 px-2 font-semibold">${isEnglish ? "2. Key Vocabulary / Grammar" : "2. Kaidah Kebahasaan / Kata Kunci"}</td><td class="border border-sky-200 px-2 text-slate-400">..................................................................................</td></tr>
+                </tbody>
+              </table>
+            </section>
+            <section class="flex-1 rounded-2xl border-2 border-amber-300 bg-amber-50/30 p-2.5 flex flex-col justify-between">
+              <div class="flex items-center justify-between mb-1">
+                <span class="px-2.5 py-0.5 rounded-xl bg-amber-400 text-slate-900 font-display font-bold text-[9.5pt]">${isEnglish ? "✍️ Creative Writing Zone!" : "✍️ Ayo Berkarya! (Latihan Menulis)"}</span>
+                <span class="text-[8pt] font-semibold text-amber-800">${isEnglish ? "Write 1 short paragraph" : "Tulis 1 paragraf kreatifmu"}</span>
+              </div>
+              <div class="bg-white rounded-xl border border-slate-200 p-2.5 flex-1 flex flex-col justify-between">
+                <div class="text-[8.5pt] font-semibold text-slate-700">${isEnglish ? `Write a short text about "${topik}" applying the correct structure and vocabulary:` : `Susunlah kerangka dan paragraf singkat bertema "${topik}" dengan memperhatikan struktur & ejaan:`}</div>
+                <div class="writing-lines flex-1 min-h-[76px] mt-1"></div>
+              </div>
+            </section>
+          `
+        };
+      }
+
+      if (m.includes("ppkn")) {
+        return {
+          subtitle: `Membangun Karakter, Harmoni, & Nilai: ${topik}!`,
+          tujuan: [
+            `Mengidentifikasi nilai-nilai luhur Pancasila yang terkandung dalam materi ${topik}.`,
+            `Menunjukkan komitmen aksi nyata dalam kehidupan di sekolah dan masyarakat.`
+          ],
+          activityHTML: `
+            <section class="rounded-2xl border-2 border-sky-200 bg-white p-2.5">
+              <div class="flex items-center justify-between mb-1">
+                <span class="px-2.5 py-0.5 rounded-xl bg-sky-500 text-white font-display font-bold text-[9.5pt]">⚖️ Ayo Diskusi Nilai! (Studi Dilema Moral)</span>
+                <span class="text-[8pt] font-semibold text-sky-600">Pendidikan Karakter</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex-1 bg-amber-50 border-l-4 border-amber-400 px-3 py-2 rounded-r-xl text-slate-800 leading-snug">🤝 <b>Situasi Kelas:</b> Saat diskusi kelompok mengenai <b>${topik}</b>${subLabel}, terjadi perbedaan pendapat yang cukup tajam antar anggota. Bagaimana sikap bijak yang mencerminkan warga negara yang baik?</div>
+                <div class="shrink-0 bg-sky-50/70 rounded-xl p-1.5 border border-dashed border-sky-300">${getContextualIllustration(mapel, topik, subTopik)}</div>
+              </div>
+            </section>
+            <section class="flex-1 rounded-2xl dashed-box p-2.5 flex flex-col justify-between gap-1.5">
+              <div class="bg-white rounded-xl border border-sky-200 px-2.5 py-1.5 flex-1">
+                <div class="font-bold text-sky-900">1. Identifikasi Nilai: Sila Pancasila atau norma apa saja yang relevan dengan kasus <b>${topik}</b> di atas?</div>
+                <div class="writing-lines min-h-[36px] mt-1"></div>
+              </div>
+              <div class="bg-white rounded-xl border border-sky-200 px-2.5 py-1.5 flex-1">
+                <div class="font-bold text-sky-900">2. Analisis Solusi: Bagaimana langkah musyawarah yang adil untuk menyelesaikan masalah tersebut?</div>
+                <div class="writing-lines min-h-[36px] mt-1"></div>
+              </div>
+            </section>
+            <section class="rounded-2xl border-2 border-amber-300 bg-amber-50/40 p-2.5">
+              <div class="font-display font-bold text-[9.5pt] text-amber-900 mb-1">🌟 Komitmen Aksi Nyata Kelompok Kami</div>
+              <div class="bg-white rounded-xl border border-amber-200 px-2.5 py-1.5">
+                <div class="text-[8.5pt] text-slate-700 font-medium">Kami berjanji menerapkan nilai <b>${topik}</b> di sekolah dengan cara:</div>
+                <div class="writing-lines min-h-[34px] mt-1"></div>
+              </div>
+            </section>
+          `
+        };
+      }
+
+      if (m.includes("informatika")) {
+        return {
+          subtitle: `Berpikir Komputasional & Solusi Digital: ${topik}!`,
+          tujuan: [
+            `Memecah masalah kompleks pada ${topik} menjadi bagian kecil (dekomposisi).`,
+            `Menyusun langkah algoritma terurut dan menguji kebenaran solusinya.`
+          ],
+          activityHTML: `
+            <section class="rounded-2xl border-2 border-sky-200 bg-white p-2.5">
+              <div class="flex items-center justify-between mb-1">
+                <span class="px-2.5 py-0.5 rounded-xl bg-sky-500 text-white font-display font-bold text-[9.5pt]">💻 Tantangan Komputasi! (Problem Statement)</span>
+                <span class="text-[8pt] font-semibold text-sky-600">Computational Thinking</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex-1 bg-amber-50 border-l-4 border-amber-400 px-3 py-2 rounded-r-xl text-slate-800 leading-snug">🤖 <b>Misi Sistem:</b> Kamu diminta merancang solusi otomatis berbasis konsep <b>${topik}</b>${subLabel} agar pekerjaan sehari-hari menjadi lebih cepat, akurat, dan bebas kesalahan!</div>
+                <div class="shrink-0 bg-sky-50/70 rounded-xl p-1.5 border border-dashed border-sky-300">${getContextualIllustration(mapel, topik, subTopik)}</div>
+              </div>
+            </section>
+            <section class="rounded-2xl dashed-box px-3 py-2">
+              <div class="font-display font-bold text-[9.5pt] text-sky-900 mb-1">🧩 Tahap 1: Dekomposisi (Memecah Masalah Kecil)</div>
+              <div class="grid grid-cols-3 gap-2 text-[8.5pt]">
+                <div class="bg-white rounded-xl border border-sky-200 p-2"><div class="font-bold text-sky-800">Sub-Masalah 1 (Input)</div><div class="writing-lines min-h-[28px] mt-1"></div></div>
+                <div class="bg-white rounded-xl border border-amber-200 p-2"><div class="font-bold text-amber-800">Sub-Masalah 2 (Proses)</div><div class="writing-lines min-h-[28px] mt-1"></div></div>
+                <div class="bg-white rounded-xl border border-emerald-200 p-2"><div class="font-bold text-emerald-800">Sub-Masalah 3 (Output)</div><div class="writing-lines min-h-[28px] mt-1"></div></div>
+              </div>
+            </section>
+            <section class="flex-1 rounded-2xl border-2 border-amber-300 bg-amber-50/30 p-2.5 flex flex-col justify-between gap-1.5">
+              <div class="bg-white rounded-xl border border-slate-200 px-2.5 py-1.5 flex-1">
+                <div class="font-display font-bold text-[9pt] text-sky-900">⚙️ Tahap 2: Rancangan Algoritma / Langkah Logis</div>
+                <div class="writing-lines min-h-[46px] mt-1 text-[8pt] text-slate-400">MULAI → Langkah 1: ... → Langkah 2: ... → SELESAI</div>
+              </div>
+              <div class="bg-white rounded-xl border border-emerald-300 px-2.5 py-1.5">
+                <div class="font-display font-bold text-[9pt] text-emerald-800">✅ Tahap 3: Uji Solusi (Test Case & Evaluasi)</div>
+                <div class="text-[8.5pt] text-slate-700 mt-0.5">Contoh Data Uji: ............................. | Hasil yang Diharapkan: .............................</div>
+              </div>
+            </section>
+          `
+        };
+      }
+
+      return {
+        subtitle: `Eksplorasi Kreatif & Praktik Seru ${topik}!`,
+        tujuan: [
+          `Memahami konsep dasar dan teknik utama pada materi ${topik}${subLabel}.`,
+          `Menerapkan keterampilan ${topik} melalui aktivitas kolaboratif yang menyenangkan.`
+        ],
+        activityHTML: `
+          <section class="rounded-2xl border-2 border-sky-200 bg-white p-2.5">
+            <div class="flex items-center justify-between mb-1">
+              <span class="px-2.5 py-0.5 rounded-xl bg-sky-500 text-white font-display font-bold text-[9.5pt]">✨ Ayo Amati! (Stimulus & Pemantik)</span>
+              <span class="text-[8pt] font-semibold text-sky-600">Konteks Nyata</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="flex-1 bg-amber-50 border-l-4 border-amber-400 px-3 py-2 rounded-r-xl text-slate-800 leading-snug">💡 <i>"Tahukah kamu? Menguasai <b>${topik}</b>${subLabel} dapat melatih kreativitas, ketangkasan, dan kerja sama tim kita! Yuk kita eksplorasi bersama!"</i></div>
+              <div class="shrink-0 bg-sky-50/70 rounded-xl p-1.5 border border-dashed border-sky-300">${getContextualIllustration(mapel, topik, subTopik)}</div>
+            </div>
+          </section>
+          <section class="rounded-2xl dashed-box px-3 py-2">
+            <div class="font-display font-bold text-[9.5pt] text-sky-900 mb-1">🔍 Ayo Eksplorasi Konsep & Teknik</div>
+            <div class="bg-white rounded-xl border border-sky-200 px-2.5 py-1.5">
+              <div class="font-semibold text-slate-800">Diskusikan bersama timmu: Apa saja unsur, teknik, atau aturan penting yang harus diperhatikan dalam <b>${topik}</b>?</div>
+              <div class="writing-lines min-h-[42px] mt-1"></div>
+            </div>
+          </section>
+          <section class="flex-1 rounded-2xl border-2 border-amber-300 bg-amber-50/30 p-2.5 flex flex-col justify-between gap-1.5">
+            <div class="font-display font-bold text-[9.5pt] text-amber-900">🏆 Tantangan & Praktik Bertingkat</div>
+            <div class="bg-white rounded-xl border border-slate-200 px-2.5 py-1.5 flex-1">
+              <div class="font-semibold text-slate-800">1. <span class="px-1.5 rounded bg-sky-100 text-sky-800 text-[7.5pt] font-bold">Dasar</span> Jelaskan langkah-langkah melakukan praktik/penerapan <b>${topik}</b> secara runtut!</div>
+              <div class="writing-lines min-h-[36px] mt-1"></div>
+            </div>
+            <div class="bg-white rounded-xl border border-slate-200 px-2.5 py-1.5 flex-1">
+              <div class="font-semibold text-slate-800">2. <span class="px-1.5 rounded bg-rose-100 text-rose-800 text-[7.5pt] font-bold">Kreasi</span> Rancang ide karya atau simulasi kelompok terkait <b>${topik}</b> dan tuliskan hasilnya!</div>
+              <div class="writing-lines min-h-[36px] mt-1"></div>
+            </div>
+          </section>
+        `
+      };
+    }
+
+    /* ============================================================
+       6. RENDER LKPD + EMPTY STATE
+       ============================================================ */
+    function showToast(msg, icon = "✅") {
+      const toast = document.getElementById("toastBox");
+      document.getElementById("toastMsg").textContent = msg;
+      document.getElementById("toastIcon").textContent = icon;
+      toast.classList.remove("hidden");
+      toast.classList.add("flex");
+      setTimeout(() => { toast.classList.add("hidden"); toast.classList.remove("flex"); }, 3000);
+    }
+
+    function renderEmptyState() {
+      document.getElementById("lkpdCanvas").innerHTML = `
+        <div class="flex-1 flex items-center justify-center text-center px-6">
+          <div>
+            <div class="text-7xl mb-4">📝</div>
+            <h2 class="font-display text-2xl font-bold text-sky-800 mb-2">LKPD Belum Dibuat</h2>
+            <p class="text-slate-600 text-sm leading-relaxed max-w-xs mx-auto">
+              Isi semua kolom di form, lalu klik <b>✨ Generate LKPD</b> untuk membuat LKPD 1 halaman A4.
+            </p>
+          </div>
+        </div>
+      `;
+      const fitBadge = document.getElementById("fitBadge");
+      fitBadge.textContent = "Menunggu Generate";
+      fitBadge.className = "px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px]";
+      updatePreviewScale();
+    }
+
+    function renderLKPD(shuffle = false) {
+      const mapelVal = document.getElementById("mapelSelect").value;
+      const customMapel = document.getElementById("customMapelInput").value.trim();
+      const mapel = mapelVal === "Lainnya" ? (customMapel || "Mata Pelajaran Kreatif") : mapelVal;
+      const topik = document.getElementById("topikInput").value.trim() || "Topik Pembelajaran";
+      const subTopik = document.getElementById("subTopikInput").value.trim();
+      const jenjang = document.getElementById("jenjangInput").value;
+      const kelas = document.getElementById("kelasInput").value;
+      const model = document.getElementById("modelInput").value;
+      const guru = document.getElementById("guruInput").value.trim();
+      const sekolah = document.getElementById("sekolahInput").value.trim();
+
+      if (shuffle) currentVariantIndex = (currentVariantIndex + 1) % 2;
+
+      const mascotSVG = getMascot(mapel);
+      const adaptive = buildAdaptiveContent(mapel, topik, subTopik, currentVariantIndex);
+
+      const referenceHTML = extractedReferencePoints.length > 0 ? `
+        <section class="rounded-xl bg-indigo-50/90 border border-indigo-200 px-3 py-1.5 text-[8.5pt] text-slate-700">
+          <div class="font-display font-bold text-indigo-900 mb-0.5 flex items-center gap-1">
+            <span>📎 Referensi Materi</span>
+            <span class="text-[7.5pt] font-normal text-indigo-600">(Intisari dari dokumen guru)</span>
+          </div>
+          <ul class="list-disc list-inside space-y-0.5 leading-tight">
+            ${extractedReferencePoints.map(pt => `<li>${pt}</li>`).join("")}
+          </ul>
+        </section>
+      ` : "";
+
+      const html = `
+        <div id="a4InnerContent" class="a4-content-layer" style="font-size: 9.5pt;">
+          <header class="rounded-2xl bg-gradient-to-r from-sky-100 via-sky-50 to-amber-50 border-2 border-sky-300 p-2.5 relative">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex-1">
+                <div class="flex flex-wrap items-center gap-1.5 mb-1">
+                  <span class="inline-block px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-900 font-display font-bold text-[8.5pt] -rotate-1 shadow-2xs">🚀 LKPD ${mapel.toUpperCase()} • ${jenjang}</span>
+                  <span class="inline-block px-2 py-0.5 rounded-full bg-sky-600 text-white font-semibold text-[8pt]">${model}</span>
+                </div>
+                <h1 class="font-display text-[15.5pt] font-bold text-sky-900 leading-tight tracking-tight">${topik}</h1>
+                <p class="text-[9pt] font-medium text-sky-700 mt-0.5">✨ ${subTopik ? subTopik : adaptive.subtitle}</p>
+              </div>
+              <div class="shrink-0 -mt-1 -mr-1">${mascotSVG}</div>
+            </div>
+            <div class="grid grid-cols-4 gap-x-2 mt-1.5 pt-1 border-t border-sky-200/80 text-[8pt] text-slate-700">
+              <div class="truncate"><b>Mapel:</b> ${mapel}</div>
+              <div class="truncate"><b>Kelas:</b> ${kelas}</div>
+              <div class="truncate"><b>Guru:</b> ${guru}</div>
+              <div class="truncate"><b>Sekolah:</b> ${sekolah}</div>
+            </div>
+            <div class="mt-1.5 rounded-xl dashed-yellow px-3 py-1.5">
+              <div class="flex items-center justify-between text-[9pt] font-bold text-amber-900 mb-0.5">
+                <span>👥 Identitas Kelompok Hebat: _______________________</span>
+                <span class="text-[8pt] font-normal text-amber-700">Tanggal: ___ / ___ / 2026</span>
+              </div>
+              <div class="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[9.5pt] text-slate-700">
+                <div>1. ....................................................</div>
+                <div>3. ....................................................</div>
+                <div>2. ....................................................</div>
+                <div>4. ....................................................</div>
+              </div>
+            </div>
+          </header>
+
+          <section class="grid grid-cols-12 gap-2">
+            <div class="col-span-7 rounded-2xl bg-sky-50/90 border border-sky-200 px-3 py-1.5">
+              <h2 class="font-display font-bold text-[9pt] text-sky-800 mb-0.5">🎯 Tujuan Belajar Kita</h2>
+              <ul class="list-disc list-inside text-[8.5pt] text-slate-700 space-y-0.5 leading-snug">
+                ${adaptive.tujuan.map(t => `<li>${t}</li>`).join("")}
+              </ul>
+            </div>
+            <div class="col-span-5 rounded-2xl bg-amber-50/90 border border-amber-200 px-3 py-1.5">
+              <h2 class="font-display font-bold text-[9pt] text-amber-800 mb-0.5">💡 Petunjuk Seru</h2>
+              <ol class="list-decimal list-inside text-[8.5pt] text-slate-700 space-y-0.5 leading-snug">
+                <li>Berdoa dulu sebelum mulai, ya!</li>
+                <li>Diskusi aktif bareng tim hebatmu.</li>
+                <li>Tanya gurumu jika ada yang bingung!</li>
+              </ol>
+            </div>
+          </section>
+
+          ${referenceHTML}
+
+          <main id="activityArea" class="flex-1 flex flex-col justify-between gap-2">
+            ${adaptive.activityHTML}
+          </main>
+
+          <footer class="rounded-2xl bg-gradient-to-r from-sky-100 to-amber-100 border border-sky-300 px-3 py-1.5">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex-1 space-y-0.5 text-[8.5pt] text-slate-800">
+                <div class="font-display font-bold text-[9pt] text-sky-900">🌟 Refleksi Diri (Hebat, kamu sudah menyelesaikan aktivitas hari ini!)</div>
+                <div>1. Hal paling seru yang kamu pelajari hari ini: ........................................................................</div>
+                <div>2. Bagian yang masih bikin kamu penasaran: ...........................................................................</div>
+              </div>
+              <div class="shrink-0 bg-white/90 rounded-xl border border-amber-300 px-2.5 py-1 text-center">
+                <div class="text-[7.5pt] font-bold text-slate-700">Gimana pemahamanmu?</div>
+                <div class="flex items-center justify-center gap-2 text-[13pt] my-0.5"><span>😀</span><span>🙂</span><span>😐</span></div>
+                <div class="flex items-center justify-center gap-2.5 text-[6.5pt] text-slate-500"><span>Paham!</span><span>Lumayan</span><span>Latihan</span></div>
+              </div>
+            </div>
+          </footer>
+        </div>
+      `;
+
+      document.getElementById("lkpdCanvas").innerHTML = html;
+      autoFitA4Height();
+      updatePreviewScale();
+    }
+
+    /* ============================================================
+       7. AUTO-FIT A4 & SKALA PRATINJAU
+       ============================================================ */
+    function autoFitA4Height() {
+      const page = document.getElementById("lkpdCanvas");
+      const activityArea = document.getElementById("activityArea");
+      const fitBadge = document.getElementById("fitBadge");
+      if (!page || !activityArea) return;
+
+      page.style.maxHeight = "none";
+      const baseFontPt = 9.5;
+      let reduction = 0;
+      activityArea.style.fontSize = baseFontPt + "pt";
+      const targetMaxPx = 1123;
+
+      while (page.scrollHeight > targetMaxPx && reduction < 1.5) {
+        reduction += 0.5;
+        activityArea.style.fontSize = (baseFontPt - reduction) + "pt";
+      }
+      page.style.maxHeight = "297mm";
+
+      if (page.scrollHeight <= targetMaxPx + 4) {
+        fitBadge.textContent = reduction > 0 ? `Pas 1 Halaman (Font -${reduction}pt)` : "Pas 1 Halaman (100%)";
+        fitBadge.className = "px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[11px]";
+      } else {
+        fitBadge.textContent = "Konten Padat (Cek Pratinjau)";
+        fitBadge.className = "px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px]";
+      }
+    }
+
+    function updatePreviewScale() {
+      const container = document.getElementById("previewContainer");
+      const wrapper = document.getElementById("a4Wrapper");
+      const zoomText = document.getElementById("zoomLevelText");
+      if (!container || !wrapper) return;
+      const a4WidthPx = 794;
+      const availableWidth = container.clientWidth - 32;
+      const scale = availableWidth < a4WidthPx ? Math.max(0.4, availableWidth / a4WidthPx) : 1;
+      wrapper.style.transform = `scale(${scale})`;
+      wrapper.style.height = `${1123 * scale}px`;
+      if (zoomText) zoomText.textContent = `${Math.round(scale * 100)}%`;
+    }
+
+    /* ============================================================
+       8. FUNGSI PRINT
+       ============================================================ */
+    function printLKPD() {
+      const activityArea = document.getElementById("activityArea");
+      if (!activityArea) {
+        showToast("LKPD belum dibuat. Isi form & klik Generate dulu ya!", "⚠️");
+        return;
+      }
+      window.print();
+    }
+
+    /* ============================================================
+       9. EKSPOR PNG PRESISI
+       Teknik: clone canvas ke stage off-screen yang bersih
+       (tanpa transform/shadow/rounded), lalu capture dengan
+       foreignObjectRendering (native browser rendering) + fallback.
+       ============================================================ */
+    function isCanvasBlank(shot) {
+      try {
+        const ctx = shot.getContext("2d");
+        const small = document.createElement("canvas");
+        small.width = 100; small.height = 100;
+        const sCtx = small.getContext("2d");
+        sCtx.drawImage(shot, 0, 0, 100, 100);
+        const data = sCtx.getImageData(0, 0, 100, 100).data;
+        let r = 0, g = 0, b = 0, count = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          if (data[i + 3] > 0) { r += data[i]; g += data[i + 1]; b += data[i + 2]; count++; }
+        }
+        if (count === 0) return true;
+        r /= count; g /= count; b /= count;
+        return r > 250 && g > 250 && b > 250;
+      } catch (e) { return false; }
+    }
+
+    async function exportToImage() {
+      const canvas = document.getElementById("lkpdCanvas");
+      const activityArea = document.getElementById("activityArea");
+
+      if (!canvas || !activityArea) {
+        showToast("LKPD belum dibuat. Isi form & klik Generate dulu ya!", "⚠️");
+        return;
+      }
+
+      const mapelVal = document.getElementById("mapelSelect").value;
+      const topikVal = document.getElementById("topikInput").value.trim() || "LKPD";
+      const safeName = `LKPD_${mapelVal}_${topikVal}`.replace(/[^a-zA-Z0-9]/g, "_") + ".png";
+
+      const overlay = document.getElementById("loadingOverlay");
+      const titleEl = overlay.querySelector("h3");
+      const descEl = overlay.querySelector("p");
+      const prevTitle = titleEl.textContent;
+      const prevDesc = descEl.textContent;
+      titleEl.textContent = "📸 Membuat Gambar HD...";
+      descEl.textContent = "Merender LKPD ke PNG resolusi tinggi (≈300 DPI)";
+      overlay.classList.remove("hidden");
+      overlay.classList.add("flex");
+
+      /* --- Clone canvas ke stage off-screen yang bersih --- */
+      const clone = canvas.cloneNode(true);
+      clone.removeAttribute("id");
+      clone.style.cssText = "width:210mm!important;height:297mm!important;min-height:297mm!important;max-height:297mm!important;padding:10mm 12mm!important;box-sizing:border-box!important;background:#fff!important;box-shadow:none!important;border-radius:0!important;transform:none!important;margin:0!important;position:relative!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;overflow:hidden!important;";
+
+      const stage = document.createElement("div");
+      stage.style.cssText = "position:fixed!important;left:-10000px!important;top:0!important;width:210mm!important;height:297mm!important;background:#fff!important;z-index:99999!important;overflow:hidden!important;pointer-events:none!important;";
+      stage.appendChild(clone);
+      document.body.appendChild(stage);
+
+      try {
+        if (document.fonts && document.fonts.ready) {
+          try { await document.fonts.ready; } catch (e) {}
+        }
+        await new Promise(r => setTimeout(r, 500));
+
+        const w = clone.offsetWidth;
+        const h = clone.offsetHeight;
+        const baseOpts = {
+          scale: 3,
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: "#ffffff",
+          logging: false,
+          width: w,
+          height: h,
+          windowWidth: w,
+          windowHeight: h,
+          scrollX: 0,
+          scrollY: 0
+        };
+
+        let shot;
+        try {
+          shot = await html2canvas(clone, { ...baseOpts, foreignObjectRendering: true });
+          if (isCanvasBlank(shot)) throw new Error("foreignObject blank");
+        } catch (e) {
+          console.warn("foreignObject gagal, fallback ke default:", e);
+          shot = await html2canvas(clone, baseOpts);
+        }
+
+        const blob = await new Promise((resolve, reject) => {
+          shot.toBlob(b => b ? resolve(b) : reject(new Error("toBlob gagal")), "image/png", 1.0);
+        });
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = safeName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 3000);
+        showToast(`Berhasil diekspor: ${safeName}`, "🖼️");
+      } catch (err) {
+        console.error("Export image error:", err);
+        showToast("Gagal ekspor gambar: " + err.message, "⚠️");
+      } finally {
+        if (stage.parentNode) stage.parentNode.removeChild(stage);
+        overlay.classList.add("hidden");
+        overlay.classList.remove("flex");
+        titleEl.textContent = prevTitle;
+        descEl.textContent = prevDesc;
+      }
+    }
+
+    /* ============================================================
+       10. FORM EVENT LISTENERS
+       ============================================================ */
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById("lkpdForm");
+      const mapelSelect = document.getElementById("mapelSelect");
+      const customMapelInput = document.getElementById("customMapelInput");
+      const topikInput = document.getElementById("topikInput");
+      const subTopikInput = document.getElementById("subTopikInput");
+      const jenjangInput = document.getElementById("jenjangInput");
+      const kelasInput = document.getElementById("kelasInput");
+
+      const refFileInput = document.getElementById("refFileInput");
+      const fileStatusBox = document.getElementById("fileStatusBox");
+      const fileNameDisplay = document.getElementById("fileNameDisplay");
+      const fileSizeDisplay = document.getElementById("fileSizeDisplay");
+      const fileStatusBadge = document.getElementById("fileStatusBadge");
+      const btnClearFile = document.getElementById("btnClearFile");
+
+      /* --- Mapel berubah → update placeholder Topik/Sub-Topik & reset nilai --- */
+      mapelSelect.addEventListener("change", () => {
+        const selected = mapelSelect.value;
+        if (selected === "Lainnya") {
+          customMapelInput.classList.remove("hidden");
+          customMapelInput.required = true;
+        } else {
+          customMapelInput.classList.add("hidden");
+          customMapelInput.required = false;
+          customMapelInput.value = "";
+        }
+        topikInput.value = "";
+        subTopikInput.value = "";
+      });
+
+      /* --- Jenjang berubah → populate Kelas --- */
+      jenjangInput.addEventListener("change", () => {
+        const jenjang = jenjangInput.value;
+        if (!jenjang) {
+          kelasInput.innerHTML = '<option value="" disabled selected>Pilih Jenjang dulu</option>';
+          kelasInput.disabled = true;
+          kelasInput.value = "";
+        } else {
+          const opts = jenjang === "SMA" ? ["X", "XI", "XII"] : ["VII", "VIII", "IX"];
+          kelasInput.innerHTML = '<option value="" disabled selected>Pilih Kelas...</option>' +
+            opts.map(k => `<option value="${k}">${k}</option>`).join("");
+          kelasInput.disabled = false;
+        }
+      });
+
+      /* --- Upload file referensi --- */
+      refFileInput.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        fileStatusBox.classList.remove("hidden");
+        btnClearFile.classList.remove("hidden");
+        fileNameDisplay.textContent = file.name;
+        fileSizeDisplay.textContent = `(${formatBytes(file.size)})`;
+        fileStatusBadge.textContent = "⏳ membaca...";
+        fileStatusBadge.className = "shrink-0 font-bold text-sky-600";
+
+        try {
+          const rawText = await parseReferenceFile(file);
+          const points = summarizeTextToPoints(rawText);
+          if (points.length === 0) throw new Error("Teks kosong");
+          extractedReferencePoints = points;
+          fileStatusBadge.textContent = "✅ terbaca";
+          fileStatusBadge.className = "shrink-0 font-bold text-emerald-600";
+          showToast("Referensi materi berhasil diekstrak!", "📎");
+        } catch (err) {
+          extractedReferencePoints = [];
+          fileStatusBadge.textContent = "⚠️ gagal";
+          fileStatusBadge.className = "shrink-0 font-bold text-amber-600";
+          showToast("File tidak terbaca, LKPD tetap dibuat tanpa referensi.", "⚠️");
+        }
+      });
+
+      btnClearFile.addEventListener("click", () => {
+        refFileInput.value = "";
+        extractedReferencePoints = [];
+        fileStatusBox.classList.add("hidden");
+        btnClearFile.classList.add("hidden");
+        showToast("Referensi dihapus.", "🧹");
+      });
+
+      /* --- Validasi form --- */
+      function validateForm() {
+        const requiredFields = [
+          { id: "mapelSelect", label: "Mata Pelajaran" },
+          { id: "topikInput", label: "Topik / Materi Pokok" },
+          { id: "subTopikInput", label: "Sub-Topik" },
+          { id: "jenjangInput", label: "Jenjang" },
+          { id: "kelasInput", label: "Kelas" },
+          { id: "modelInput", label: "Model Pembelajaran" },
+          { id: "guruInput", label: "Nama Guru" },
+          { id: "sekolahInput", label: "Nama Sekolah" }
+        ];
+        for (const f of requiredFields) {
+          const el = document.getElementById(f.id);
+          if (!el.value || !el.value.trim()) {
+            el.focus();
+            return { valid: false, message: `${f.label} wajib diisi ya!`, el };
+          }
+        }
+        if (mapelSelect.value === "Lainnya" && !customMapelInput.value.trim()) {
+          customMapelInput.focus();
+          return { valid: false, message: "Nama mata pelajaran wajib diisi!", el: customMapelInput };
+        }
+        return { valid: true };
+      }
+
+      /* --- Submit (Generate) --- */
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const v = validateForm();
+        if (!v.valid) {
+          showToast(v.message, "⚠️");
+          return;
+        }
+
+        const overlay = document.getElementById("loadingOverlay");
+        const bar = document.getElementById("loadingBar");
+        overlay.classList.remove("hidden");
+        overlay.classList.add("flex");
+        bar.style.width = "30%";
+        setTimeout(() => { bar.style.width = "80%"; }, 200);
+        setTimeout(() => {
+          bar.style.width = "100%";
+          renderLKPD(false);
+          setTimeout(() => {
+            overlay.classList.add("hidden");
+            overlay.classList.remove("flex");
+            showToast("LKPD 1 Halaman A4 siap!", "✨");
+          }, 180);
+        }, 600);
+      });
+
+      /* --- Acak Soal --- */
+      document.getElementById("btnShuffle").addEventListener("click", () => {
+        const v = validateForm();
+        if (!v.valid) {
+          showToast("Isi form dulu, lalu klik Generate sebelum mengacak.", "⚠️");
+          return;
+        }
+        renderLKPD(true);
+        showToast("Variasi aktivitas & soal berhasil diacak ulang!", "🔄");
+      });
+
+      /* --- Ekspor PNG --- */
+      document.getElementById("btnExportImage").addEventListener("click", exportToImage);
+
+      window.addEventListener("resize", updatePreviewScale);
+      renderEmptyState();
+    });
+  </script>
+</body>
+</html>
